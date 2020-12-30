@@ -76,7 +76,7 @@ facial_attribute_models = {}
 facial_attribute_models["emotion"] = emotion_model
 facial_attribute_models["age"] = age_model
 facial_attribute_models["gender"] = gender_model
-facial_attribute_models["race"] = race_model
+# facial_attribute_models["race"] = race_model
 
 print("Facial attribute analysis models are built in ", toc-tic," seconds")
 
@@ -135,14 +135,14 @@ def analyzeWrapper(req, trx_id = 0):
 
 	#---------------------------
 
-	actions= ['emotion', 'age', 'gender', 'race']
+	actions= ['emotion', 'age', 'gender']
 	if "actions" in list(req.keys()):
 		actions = req["actions"]
 	
 	#---------------------------
 
 	#resp_obj = DeepFace.analyze(instances, actions=actions)
-	resp_obj = DeepFace.analyze(instances, actions=actions, models=facial_attribute_models)
+	resp_obj = DeepFace.analyze(instances, actions=actions, models=facial_attribute_models, detector_backend='opencv')
 	
 	return resp_obj
 	
