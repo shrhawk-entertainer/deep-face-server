@@ -24,7 +24,7 @@ print("Loading Face Recognition Models...")
 pbar = tqdm(range(0, 6), desc='Loading Face Recognition Models...')
 
 for index in pbar:
-	
+
 	if index == 0:
 		pbar.set_description("Loading VGG-Face")
 		vggface_model = DeepFace.build_model("VGG-Face")
@@ -43,7 +43,7 @@ for index in pbar:
 	elif index == 5:
 		pbar.set_description("Loading ArcFace DeepFace")
 		arcface_model = DeepFace.build_model("ArcFace")
-		
+
 toc = time.time()
 
 print("Face recognition models are built in ", toc-tic," seconds")
@@ -92,23 +92,27 @@ if tf_version == 1:
 def index():
 	return '<h1>Hello, world!</h1>'
 
-@app.route('/et_rs_analysis/analyze', methods=['POST'])
+@app.route('/analyze', methods=['POST'])
 def analyze():
-	
+
 	global graph
-	
+
+	print("Got request.")
+
 	tic = time.time()
 	req = request.get_json()
 	trx_id = uuid.uuid4()
 
+	print("Starting transaction.")
+
 	#---------------------------
-	
+
 	if tf_version == 1:
 		with graph.as_default():
 			resp_obj = analyzeWrapper(req, trx_id)
 	elif tf_version == 2:
 		resp_obj = analyzeWrapper(req, trx_id)
-		
+
 	#---------------------------
 
 	toc = time.time()
@@ -127,10 +131,10 @@ def analyzeWrapper(req, trx_id = 0):
 
 		for item in raw_content: #item is in type of dict
 			instances.append(item)
-	
+
 	if len(instances) == 0:
 		return jsonify({'success': False, 'error': 'you must pass at least one img object in your request'}), 205
-	
+
 	print("Analyzing ", len(instances)," instances")
 
 	#---------------------------
@@ -138,52 +142,52 @@ def analyzeWrapper(req, trx_id = 0):
 	actions= ['emotion', 'age', 'gender']
 	if "actions" in list(req.keys()):
 		actions = req["actions"]
-	
+
 	#---------------------------
 
 	#resp_obj = DeepFace.analyze(instances, actions=actions)
 	resp_obj = DeepFace.analyze(instances, actions=actions, models=facial_attribute_models, detector_backend='opencv')
-	
+
 	return resp_obj
-	
-@app.route('/et_rs_analysis/verify', methods=['POST'])
+
+@app.route('/verify', methods=['POST'])
 def verify():
-	
+
 	global graph
-	
+
 	tic = time.time()
 	req = request.get_json()
 	trx_id = uuid.uuid4()
-	
+
 	resp_obj = jsonify({'success': False})
-	
+
 	if tf_version == 1:
 		with graph.as_default():
 			resp_obj = verifyWrapper(req, trx_id)
 	elif tf_version == 2:
 		resp_obj = verifyWrapper(req, trx_id)
-		
+
 	#--------------------------
-	
+
 	toc =  time.time()
-	
+
 	resp_obj["trx_id"] = trx_id
 	resp_obj["seconds"] = toc-tic
-	
+
 	return resp_obj, 200
 
 def verifyWrapper(req, trx_id = 0):
-	
+
 	resp_obj = jsonify({'success': False})
-	
+
 	model_name = "VGG-Face"; distance_metric = "cosine"
 	if "model_name" in list(req.keys()):
 		model_name = req["model_name"]
 	if "distance_metric" in list(req.keys()):
 		distance_metric = req["distance_metric"]
-	
+
 	#----------------------
-	
+
 	instances = []
 	if "img" in list(req.keys()):
 		raw_content = req["img"] #list
@@ -195,7 +199,7 @@ def verifyWrapper(req, trx_id = 0):
 			validate_img1 = False
 			if len(img1) > 11 and img1[0:11] == "data:image/":
 				validate_img1 = True
-			
+
 			validate_img2 = False
 			if len(img2) > 11 and img2[0:11] == "data:image/":
 				validate_img2 = True
@@ -205,16 +209,16 @@ def verifyWrapper(req, trx_id = 0):
 
 			instance.append(img1); instance.append(img2)
 			instances.append(instance)
-		
+
 	#--------------------------
 
 	if len(instances) == 0:
 		return jsonify({'success': False, 'error': 'you must pass at least one img object in your request'}), 205
-	
+
 	print("Input request of ", trx_id, " has ",len(instances)," pairs to verify")
-	
+
 	#--------------------------
-	
+
 	if model_name == "VGG-Face":
 		resp_obj = DeepFace.verify(instances, model_name = model_name, distance_metric = distance_metric, model = vggface_model)
 	elif model_name == "Facenet":
@@ -224,7 +228,7 @@ def verifyWrapper(req, trx_id = 0):
 	elif model_name == "DeepFace":
 		resp_obj = DeepFace.verify(instances, model_name = model_name, distance_metric = distance_metric, model = deepface_model)
 	elif model_name == "x":
-		resp_obj = DeepFace.verify(instances, model_name = modxel_name, distance_metric = distance_metric, model = deepid_model)
+		resp_obj = DeepFace.verify(instances, model_name = model_name, distance_metric = distance_metric, model = deepid_model)
 	elif model_name == "ArcFace":
 		resp_obj = DeepFace.verify(instances, model_name = model_name, distance_metric = distance_metric, model = arcface_model)
 	elif model_name == "Ensemble":
@@ -236,8 +240,9 @@ def verifyWrapper(req, trx_id = 0):
 		resp_obj = DeepFace.verify(instances, model_name = model_name, model = models)
 	else:
 		resp_obj = jsonify({'success': False, 'error': 'You must pass a valid model name. You passed %s' % (model_name)}), 205
-	
+
 	return resp_obj
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -247,4 +252,4 @@ if __name__ == '__main__':
 		default=5000,
 		help='Port of serving api')
 	args = parser.parse_args()
-	app.run(host='0.0.0.0', port=args.port)
+	app.run(host='127.0.0.1', port=8099)
