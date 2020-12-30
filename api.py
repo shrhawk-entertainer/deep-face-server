@@ -88,11 +88,11 @@ if tf_version == 1:
 #------------------------------
 #Service API Interface
 
-@app.route('/')
+@app.route('/et_rs_analysis')
 def index():
 	return '<h1>Hello, world!</h1>'
 
-@app.route('/analyze', methods=['POST'])
+@app.route('/et_rs_analysis/analyze', methods=['POST'])
 def analyze():
 	
 	global graph
@@ -146,7 +146,7 @@ def analyzeWrapper(req, trx_id = 0):
 	
 	return resp_obj
 	
-@app.route('/verify', methods=['POST'])
+@app.route('/et_rs_analysis/verify', methods=['POST'])
 def verify():
 	
 	global graph
